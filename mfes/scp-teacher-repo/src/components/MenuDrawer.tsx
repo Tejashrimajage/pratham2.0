@@ -186,8 +186,10 @@ const MenuDrawer: React.FC<DrawerProps> = ({
         const enroll = localStorage.getItem('tenantName') || '';
         
         // Construct the proper registration link
-        // Format: https://domain/registration?tenantId=Pratham&enroll=Second%20Chance%20Program
-        const registrationLink = `${registrationBase}&enroll=${encodeURIComponent(enroll)}`;
+        // Format: https://domain/Second-Chance-Program
+        const baseUrl = registrationBase.replace(/\/$/, '');
+        const programSlug = enroll.trim().replace(/\s+/g, '-');
+        const registrationLink = `${baseUrl}/${encodeURIComponent(programSlug)}`;
 
         // Copy to clipboard
         await navigator.clipboard.writeText(registrationLink);
