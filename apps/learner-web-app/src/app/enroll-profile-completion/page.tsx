@@ -410,7 +410,11 @@ const EnrollProfileCompletionInner = () => {
 
     // Use window.location.href for guaranteed navigation (router.push can silently fail in modals)
      if(questionSetIdentifier){
+<<<<<<< Updated upstream
       window.location.href = `/player/${questionSetIdentifier}?previousPage=${encodeURIComponent('/programs')}&exitLink=${encodeURIComponent('/reattempt-check')}`;
+=======
+      window.location.href = `/player/${questionSetIdentifier}?previousPage=${encodeURIComponent('/scp-dashboard')}&exitLink=${encodeURIComponent('/reattempt-check')}`;
+>>>>>>> Stashed changes
 
    
    }
