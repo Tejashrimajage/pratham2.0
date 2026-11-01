@@ -109,7 +109,7 @@ const PartnerDetails = ({ partner }: { partner: KnowledgePartner }) => (
             <SpeakableText>{partner.partnerType}</SpeakableText>
           </Typography>
 
-          <Box sx={{ pt: '30px !important' }}>
+          <Box sx={{ pt: '20px !important' }}>
             <Grid container rowSpacing={3} columnSpacing={{ xs: 3, md: 5 }}>
               <Grid item xs={12} sm={5} md={3.5} lg={3}>
                 <PartnerImage

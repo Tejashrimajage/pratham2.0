@@ -23,7 +23,16 @@ const navButtonSx = {
   zIndex: 2,
   transform: 'translateY(-50%)',
   color: 'primary.main',
-  '&:hover': { bgcolor: 'white' },
+  '@media (hover: hover)': {
+    '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' },
+  },
+  // Touch screens keep the arrow background instead of a sticky hover state
+  '@media (hover: none)': { '&:hover': { backgroundColor: 'white' } },
+  // Smaller arrows below md so they sit beside the cards
+  '@media (max-width:899.95px)': {
+    padding: '4px',
+    '& .MuiSvgIcon-root': { fontSize: '20px' },
+  },
   '&.swiper-button-disabled': { opacity: 0.4 },
 };
 
@@ -118,7 +127,7 @@ const KnowledgePartners = ({
         </Typography>
       ) : (
         <>
-          <Box sx={{ position: 'relative', px: { xs: 0, md: 4 } }}>
+          <Box sx={{ position: 'relative', px: 4 }}>
             <IconButton
               ref={prevRef}
               aria-label="Previous partners"
@@ -148,7 +157,10 @@ const KnowledgePartners = ({
                 watchOverflow={false}
                 autoplay={{
                   delay: 3000,
-                  disableOnInteraction: false,
+                  // On touch screens stop autoplay once a card is touched
+                  disableOnInteraction:
+                    typeof window !== 'undefined' &&
+                    window.matchMedia('(hover: none)').matches,
                   pauseOnMouseEnter: true,
                 }}
                 navigation={{

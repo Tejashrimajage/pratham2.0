@@ -224,14 +224,33 @@ const List: React.FC<ListProps> = ({
                   _subBox: {
                     sx: {
                       position: 'relative',
-                      px: { xs: 0, md: 4 },
+                      px: 4,
+                      // Smaller arrows below md so they sit beside the cards
+                      '& > .MuiIconButton-root': {
+                        '@media (hover: hover)': {
+                          '&:hover': {
+                            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                          },
+                        },
+                        // Touch screens keep the arrow background (no sticky hover)
+                        '@media (hover: none)': {
+                          '&:hover': { backgroundColor: 'white' },
+                        },
+                        '@media (max-width:899.95px)': {
+                          padding: '4px',
+                          '& .MuiSvgIcon-root': { fontSize: '20px' },
+                        },
+                      },
                     },
                   },
                   _carousel: {
                     slidesPerView: 1,
                     autoplay: {
                       delay: 3000,
-                      disableOnInteraction: false,
+                      // On touch screens stop autoplay once a card is touched
+                      disableOnInteraction:
+                        typeof window !== 'undefined' &&
+                        window.matchMedia('(hover: none)').matches,
                       pauseOnMouseEnter: true,
                     },
                     loop: true,
