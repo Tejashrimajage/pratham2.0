@@ -23,7 +23,7 @@ const SITE_DETAILS = {
     foreignPrefix: '/themantic',
     ogLocale: 'en_IN',
     defaultDescription:
-      'Free videos, games, stories and reading material in 15 languages for ages 1 to 18+, from Pratham Open School.',
+      'Pratham Open School offers free learning videos, games, stories and reading material in 15 Indian languages for ages 1 to 18+.',
     defaultImage: '/images/home-page-banner.png',
   },
   thematic: {
@@ -32,7 +32,7 @@ const SITE_DETAILS = {
     foreignPrefix: '/pos',
     ogLocale: 'en_IN',
     defaultDescription:
-      'Hands-on science, energy, environment and health learning resources for schools, from Experimento India.',
+      'Experimento India offers free hands-on science experiments and courses on energy, environment and health for schools and teachers.',
     defaultImage: '/images/image_ver.png',
   },
   other: {

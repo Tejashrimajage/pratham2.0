@@ -17,6 +17,10 @@ const truncate = (value: string, max: number) =>
 // "Course Name | Pratham Open School", trimming the course name so the
 // site name always survives.
 const withSiteName = (pageTitle: string) => {
+  // Avoid "Pratham Open School Home | Pratham Open School".
+  if (pageTitle.toLowerCase().includes(SITE.name.toLowerCase())) {
+    return truncate(pageTitle, TITLE_MAX);
+  }
   const suffix = ` | ${SITE.name}`;
   const available = TITLE_MAX - suffix.length;
   if (available < 10) return truncate(pageTitle, TITLE_MAX);

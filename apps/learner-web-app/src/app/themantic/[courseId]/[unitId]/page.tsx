@@ -10,7 +10,10 @@ import SubHeader from '@learner/components/themantic/subHeader/SubHeader';
 import { hierarchyAPI } from '@content-mfes/services/Hierarchy';
 
 export async function generateMetadata({ params }: any) {
-  return await getMetadata(params.courseId);
+  // Was describing the course; the unit's own title belongs on a unit page.
+  return await getMetadata(params.courseId, params.unitId, {
+    path: `/themantic/${params.courseId}/${params.unitId}`,
+  });
 }
 
 const CourseUnitDetails = dynamic(() => import('@CourseUnitDetails'), {

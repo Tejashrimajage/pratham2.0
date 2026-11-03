@@ -1,11 +1,14 @@
 import React, { Suspense } from 'react';
 
 import List from '@learner/components/themantic/content/List';
+import { buildMetadata } from '@learner/utils/seo/buildMetadata';
 
-const title = 'Experimento India';
-export const metadata = {
-  title,
-};
+export const metadata = buildMetadata({
+  title: 'Experimento India — Science Courses & Experiments for Schools',
+  description:
+    'Hands-on science courses and experiments on energy, environment and health for schools, free from Experimento India.',
+  path: '/themantic',
+});
 
 const Page = () => {
   return (
