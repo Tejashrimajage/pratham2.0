@@ -1,8 +1,11 @@
-export type SiteVariant = 'pos' | 'thematic';
+// 'other' covers every deployment of this app that is not an SEO target (PLP, LMP).
+export type SiteVariant = 'pos' | 'thematic' | 'other';
 
-// One build serves both sites; this env var decides which one this deployment is.
+// One build serves several products; this env var decides which one this
+// deployment is. Unknown values must not fall back to a real site.
+const raw = process.env.NEXT_PUBLIC_SITE_VARIANT;
 const variant: SiteVariant =
-  process.env.NEXT_PUBLIC_SITE_VARIANT === 'thematic' ? 'thematic' : 'pos';
+  raw === 'pos' || raw === 'thematic' ? raw : 'other';
 
 // Domain env vars carry a trailing slash; canonical URLs must not.
 const stripSlash = (url = '') => url.replace(/\/+$/, '');
@@ -10,6 +13,7 @@ const stripSlash = (url = '') => url.replace(/\/+$/, '');
 const DOMAIN: Record<SiteVariant, string> = {
   pos: stripSlash(process.env.NEXT_PUBLIC_POS_DOMAIN),
   thematic: stripSlash(process.env.NEXT_PUBLIC_THEMATIC_DOMAIN),
+  other: '',
 };
 
 const SITE_DETAILS = {
@@ -25,12 +29,20 @@ const SITE_DETAILS = {
     foreignPrefix: '/pos',
     ogLocale: 'en_IN',
   },
+  other: {
+    name: 'Pratham',
+    pathPrefix: '/',
+    foreignPrefix: '',
+    ogLocale: 'en_IN',
+  },
 } as const;
 
 export const siteConfig = {
   variant,
   baseUrl: DOMAIN[variant],
-  allowIndexing: process.env.NEXT_PUBLIC_ALLOW_INDEXING === 'true',
+  // Only the two SEO sites can ever be indexed, and only when switched on.
+  allowIndexing:
+    variant !== 'other' && process.env.NEXT_PUBLIC_ALLOW_INDEXING === 'true',
 };
 
 export const SITE = SITE_DETAILS[variant];
