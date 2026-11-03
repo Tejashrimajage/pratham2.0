@@ -1,5 +1,5 @@
-import { fetchContent, hierarchyAPI } from './contentService';
 import { buildMetadata } from '../seo/buildMetadata';
+import { getContent, getHierarchy } from '../seo/contentData';
 
 type MetadataOptions = {
   /** Path on this site, used for the canonical URL. */
@@ -13,20 +13,13 @@ export async function getMetadata(
   unitId?: any,
   options: MetadataOptions = {}
 ) {
-  let product: any;
-  try {
-    product = unitId
-      ? await hierarchyAPI(unitId)
-      : await fetchContent(identifier, { mode: null });
-  } catch {
-    product = null;
-  }
-
-  // Both services resolve with an error object instead of throwing.
-  const name = typeof product?.name === 'string' ? product.name : '';
+  // Cached, so the page body can reuse the same response for JSON-LD.
+  const product = unitId
+    ? await getHierarchy(unitId)
+    : await getContent(identifier);
 
   return buildMetadata({
-    title: name,
+    title: product?.name,
     description: product?.description,
     image: product?.posterImage || product?.appIcon,
     ...options,

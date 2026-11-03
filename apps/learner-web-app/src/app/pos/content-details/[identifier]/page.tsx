@@ -5,6 +5,9 @@ import Layout from '@learner/components/pos/Layout';
 import dynamic from 'next/dynamic';
 import { Box } from '@mui/material';
 import { getMetadata } from '@learner/utils/API/metabaseService';
+import { getContent } from '@learner/utils/seo/contentData';
+import { contentJsonLd, breadcrumbJsonLd } from '@learner/utils/seo/jsonLd';
+import JsonLd from '@learner/components/seo/JsonLd';
 
 export async function generateMetadata({ params }: any) {
   return await getMetadata(params.identifier, undefined, {
@@ -15,9 +18,31 @@ export async function generateMetadata({ params }: any) {
 const ContentEnrollDetails = dynamic(() => import('@ContentEnrollDetails'), {
   ssr: false,
 });
-const App = () => {
+const App = async ({ params }: any) => {
+  const content = await getContent(params.identifier);
+  const path = `/pos/content-details/${params.identifier}`;
+
   return (
     <Layout>
+      {content && (
+        <JsonLd
+          data={[
+            contentJsonLd({
+              name: content.name,
+              description: content.description,
+              path,
+              image: content.posterImage || content.appIcon,
+              mimeType: content.mimeType,
+              language: content.contentLanguage,
+              contentUrl: content.artifactUrl,
+            }),
+            breadcrumbJsonLd([
+              { name: 'Pratham Open School', path: '/pos' },
+              { name: content.name, path },
+            ]),
+          ]}
+        />
+      )}
       <Box sx={{ paddingBottom: '32px' }}>
         <ContentEnrollDetails
           isShowLayout={false}

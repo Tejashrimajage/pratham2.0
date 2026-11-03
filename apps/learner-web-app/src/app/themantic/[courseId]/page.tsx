@@ -9,6 +9,13 @@ import { Box, Container } from '@mui/material';
 import SubHeader from '@learner/components/themantic/subHeader/SubHeader';
 import { cookies } from 'next/headers';
 import { hierarchyAPI } from '@content-mfes/services/Hierarchy';
+import {
+  getContentTrail,
+  childrenOf,
+  isCollection,
+} from '@learner/utils/seo/contentData';
+import { courseJsonLd, breadcrumbJsonLd } from '@learner/utils/seo/jsonLd';
+import JsonLd from '@learner/components/seo/JsonLd';
 
 export async function generateMetadata({ params }: any) {
   return await getMetadata(params.courseId, undefined, {
@@ -58,8 +65,35 @@ if (courseId) {
 }
 
 
+  const { course, crumbs, coursePath } = await getContentTrail({
+    homePath: '/themantic',
+    homeName: 'Experimento India',
+    coursePathBase: '/themantic',
+    courseId: params?.courseId,
+  });
+
   return (
     <div className="thematic-page">
+      {course && (
+        <JsonLd
+          data={[
+            courseJsonLd({
+              name: course.name,
+              description: course.description,
+              path: coursePath,
+              image: course.posterImage || course.appIcon,
+              language: course.contentLanguage,
+              parts: childrenOf(course)
+                .filter(isCollection)
+                .map((unit: any) => ({
+                  name: unit.name,
+                  path: `${coursePath}/${unit.identifier}`,
+                })),
+            }),
+            breadcrumbJsonLd(crumbs),
+          ]}
+        />
+      )}
       <Layout sx={backgroundSx}>
         <SubHeader showFilter={false} />
         <Box className='bs-container bs-px-5'>

@@ -7,6 +7,9 @@ import Layout from '@learner/components/themantic/layout/Layout';
 import SubHeader from '@learner/components/themantic/subHeader/SubHeader';
 import { Box } from '@mui/material';
 import { hierarchyAPI } from '@content-mfes/services/Hierarchy';
+import { getContentTrail } from '@learner/utils/seo/contentData';
+import { contentJsonLd, breadcrumbJsonLd } from '@learner/utils/seo/jsonLd';
+import JsonLd from '@learner/components/seo/JsonLd';
 
 export async function generateMetadata({ params }: any) {
   return await getMetadata(params.identifier, undefined, {
@@ -59,8 +62,33 @@ const HomePage = async ({ params }: { params: { courseId: string; unitId: string
 
 
 
+  const { content, crumbs, unitPath } = await getContentTrail({
+    homePath: '/themantic',
+    homeName: 'Experimento India',
+    coursePathBase: '/themantic',
+    courseId: params?.courseId,
+    unitId: params?.unitId,
+    identifier: params?.identifier,
+  });
+
   return (
     <Box className="thematic-page">
+      {content && (
+        <JsonLd
+          data={[
+            contentJsonLd({
+              name: content.name,
+              description: content.description,
+              path: `${unitPath}/${params?.identifier}`,
+              image: content.posterImage || content.appIcon,
+              mimeType: content.mimeType,
+              language: content.contentLanguage,
+              contentUrl: content.artifactUrl,
+            }),
+            breadcrumbJsonLd(crumbs),
+          ]}
+        />
+      )}
       <Layout sx={backgroundSx}>
         <SubHeader showFilter={false} />
         <Player

@@ -11,6 +11,11 @@ import { FooterWrapper } from '@learner/components/Footer';
 import ChunkReloadGuard from '@shared-lib-v2/lib/ChunkReloadGuard/ChunkReloadGuard';
 import { siteConfig } from '@learner/utils/seo/siteConfig';
 import { buildMetadata } from '@learner/utils/seo/buildMetadata';
+import {
+  organizationJsonLd,
+  webSiteJsonLd,
+} from '@learner/utils/seo/jsonLd';
+import JsonLd from '@learner/components/seo/JsonLd';
 
 export const metadata = {
   // metadataBase makes every relative OG/canonical URL absolute; without it
@@ -65,6 +70,16 @@ export default function RootLayout({
         />
       </head>
       <body>
+          {siteConfig.baseUrl && (
+            <JsonLd
+              data={[
+                organizationJsonLd(),
+                webSiteJsonLd(
+                  siteConfig.variant === 'pos' ? '/pos/search' : undefined
+                ),
+              ]}
+            />
+          )}
           <ChunkReloadGuard />
           <ClientLayout>
 

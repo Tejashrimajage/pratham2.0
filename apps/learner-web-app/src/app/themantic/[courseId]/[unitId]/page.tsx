@@ -8,6 +8,9 @@ import { CardComponent } from '@learner/components/themantic/content/List';
 import { Box, Container } from '@mui/material';
 import SubHeader from '@learner/components/themantic/subHeader/SubHeader';
 import { hierarchyAPI } from '@content-mfes/services/Hierarchy';
+import { getContentTrail, childrenOf } from '@learner/utils/seo/contentData';
+import { itemListJsonLd, breadcrumbJsonLd } from '@learner/utils/seo/jsonLd';
+import JsonLd from '@learner/components/seo/JsonLd';
 
 export async function generateMetadata({ params }: any) {
   // Was describing the course; the unit's own title belongs on a unit page.
@@ -58,8 +61,29 @@ const App = async ({ params }: { params: { courseId: string; unitId: string } })
   }
 }
 
+  const { unit, crumbs, unitPath } = await getContentTrail({
+    homePath: '/themantic',
+    homeName: 'Experimento India',
+    coursePathBase: '/themantic',
+    courseId: params?.courseId,
+    unitId: params?.unitId,
+  });
+
   return (
     <div className="thematic-page">
+      {unit && (
+        <JsonLd
+          data={[
+            itemListJsonLd(
+              childrenOf(unit).map((item: any) => ({
+                name: item.name,
+                path: `${unitPath}/${item.identifier}`,
+              }))
+            ),
+            breadcrumbJsonLd(crumbs),
+          ]}
+        />
+      )}
       <Layout sx={backgroundSx}>
         <SubHeader showFilter={false} />
         <Box className='bs-container' sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
