@@ -1,9 +1,10 @@
-import { SITE_URL, absoluteUrl } from './seo';
+import { SITE, SITE_URL, absoluteUrl } from './seo';
 
 // JSON-LD builders. Every builder emits only what the page genuinely qualifies for —
 // a missing field means the property (or the whole node) is left out, never guessed.
 
-const ORG_NAME = 'Pratham Open School';
+// Per deployment: 'Pratham Open School' or 'Experimento India'.
+const ORG_NAME = SITE.name;
 
 // Taken from the live links in components/pos/Footer.tsx, not invented.
 const SOCIAL_PROFILES = [
@@ -37,7 +38,7 @@ export function buildWebSiteJsonLd() {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${SITE_URL}/pos/search?q={search_term_string}`,
+        urlTemplate: `${SITE_URL}${SITE.pathPrefix}/search?q={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },

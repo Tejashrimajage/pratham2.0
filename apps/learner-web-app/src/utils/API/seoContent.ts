@@ -7,6 +7,7 @@ import {
   buildWebSiteJsonLd,
 } from '../seoJsonLd';
 import { toIsoLanguage } from '../seoMeta';
+import { SITE, coursePath, resourcePath } from '../seo';
 
 // Server-side data for the crawlable block rendered before the client app mounts.
 // Every helper returns null on failure: SEO markup is additive and must never
@@ -50,6 +51,9 @@ const clean = (value?: string) =>
 // AxiosError has a `name`, so key off `identifier` to detect a real content item.
 const isContent = (value: any) => Boolean(value?.identifier);
 
+// Guards against a missing identifier producing a bare "/themantic/undefined" link.
+const hasRealId = (href: string) => !/\/(undefined|null)$/.test(href);
+
 export async function getPillarSeoData(
   pillar: string,
   description?: string,
@@ -72,7 +76,7 @@ export async function getPillarSeoData(
     const links = items
       .map((item: any) => ({
         name: clean(item?.name),
-        href: `/pos/content/${item?.identifier}`,
+        href: coursePath(item?.identifier),
       }))
       .filter((link: SeoLink) => link.name && link.href.length > 13);
 
@@ -90,7 +94,7 @@ export async function getPillarSeoData(
       links,
       jsonLd: [
         buildBreadcrumbJsonLd(
-          [{ name: 'Home', href: '/pos' }],
+          [{ name: SITE.name, href: SITE.pathPrefix }],
           `Learning for ${pillar}`
         ),
       ],
@@ -121,6 +125,45 @@ export function getHomeSeoData(heading: string, description?: string): SeoBlockD
   };
 }
 
+// Course listing for a site home or search page. Experimento hangs courses straight
+// off its root, so it has no pillar layer to list.
+export async function getCourseListSeoData(
+  heading: string,
+  description?: string,
+  limit = MAX_LINKS
+): Promise<SeoBlockData | null> {
+  try {
+    const res = await ContentSearch({
+      filters: {
+        primaryCategory: ['Course'],
+        status: ['Live'],
+        ...(SITE.programFilter ? { program: [SITE.programFilter] } : {}),
+      },
+      fields: ['name', 'identifier'],
+      limit,
+      offset: 0,
+    });
+
+    const links = (res?.result?.content ?? [])
+      .map((item: any) => ({
+        name: clean(item?.name),
+        href: coursePath(item?.identifier),
+      }))
+      .filter((link: SeoLink) => link.name && hasRealId(link.href));
+
+    if (!links.length) return null;
+
+    return {
+      heading: clean(heading) || SITE.name,
+      description: clean(description),
+      links,
+      jsonLd: [buildOrganizationJsonLd(), buildWebSiteJsonLd()],
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function getCourseSeoData(
   courseId: string
 ): Promise<SeoBlockData | null> {
@@ -134,7 +177,7 @@ export async function getCourseSeoData(
         if (!resource?.identifier) continue;
         links.push({
           name: clean(resource.name),
-          href: `/pos/content/${courseId}/${unit.identifier}/${resource.identifier}`,
+          href: resourcePath(courseId, unit.identifier, resource.identifier),
         });
       }
     }
@@ -153,8 +196,47 @@ export async function getCourseSeoData(
       links: links.slice(0, MAX_LINKS),
       jsonLd: [
         buildBreadcrumbJsonLd(buildBreadcrumbs(course), clean(course.name)),
-        buildCourseJsonLd(course, `/pos/content/${courseId}`),
+        buildCourseJsonLd(course, coursePath(courseId)),
       ],
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Unit (content listing) page: one hierarchy call gives the unit and its children.
+export async function getUnitSeoData(
+  courseId: string,
+  unitId: string
+): Promise<SeoBlockData | null> {
+  try {
+    const course = await hierarchyAPI(courseId);
+    if (!isContent(course)) return null;
+
+    const unit = (course.children ?? []).find(
+      (child: any) => child?.identifier === unitId
+    );
+    if (!isContent(unit)) return null;
+
+    const links: SeoLink[] = (unit.children ?? [])
+      .filter((resource: any) => resource?.identifier)
+      .map((resource: any) => ({
+        name: clean(resource.name),
+        href: resourcePath(courseId, unitId, resource.identifier),
+      }));
+
+    const breadcrumbs: SeoLink[] = [
+      { name: SITE.name, href: SITE.pathPrefix },
+      { name: clean(course.name), href: coursePath(courseId) },
+    ];
+
+    return {
+      heading: clean(unit.name),
+      description: clean(unit.description) || clean(course.description),
+      breadcrumbs,
+      lang: toIsoLanguage(unit?.contentLanguage || course?.contentLanguage),
+      links: links.slice(0, MAX_LINKS),
+      jsonLd: [buildBreadcrumbJsonLd(breadcrumbs, clean(unit.name))],
     };
   } catch {
     return null;
@@ -181,7 +263,7 @@ export async function getResourceSeoData(
         : undefined,
       jsonLd: [
         buildBreadcrumbJsonLd(buildBreadcrumbs(resource), clean(resource.name)),
-        buildVideoJsonLd(resource, `/pos/player/${identifier}`),
+        buildVideoJsonLd(resource, `${SITE.pathPrefix}/player/${identifier}`),
       ],
     };
   } catch {
@@ -191,7 +273,7 @@ export async function getResourceSeoData(
 
 // Home > Pillar > Subject, from the taxonomy fields the content API already returns.
 function buildBreadcrumbs(item: any): SeoLink[] {
-  const crumbs: SeoLink[] = [{ name: 'Home', href: '/pos' }];
+  const crumbs: SeoLink[] = [{ name: SITE.name, href: SITE.pathPrefix }];
 
   const domain = item?.se_domains?.[0];
   if (domain) {
@@ -201,7 +283,10 @@ function buildBreadcrumbs(item: any): SeoLink[] {
 
   const subject = item?.se_subjects?.[0];
   if (subject) {
-    crumbs.push({ name: clean(subject), href: `/pos/search?q=${encodeURIComponent(subject)}` });
+    crumbs.push({
+      name: clean(subject),
+      href: `${SITE.pathPrefix}/search?q=${encodeURIComponent(subject)}`,
+    });
   }
 
   return crumbs;

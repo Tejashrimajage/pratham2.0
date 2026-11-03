@@ -3,7 +3,10 @@
 // boundary), descriptions 140-160 chars, HTML stripped. A field the API does not
 // return is left out rather than guessed - no "undefined" and no empty brackets.
 
-const BRAND = 'Pratham Open School';
+import { SITE } from './seo';
+
+// Per deployment: 'Pratham Open School' or 'Experimento India'.
+const BRAND = SITE.name;
 const TITLE_MAX = 60;
 const DESC_MAX = 155;
 
