@@ -13,6 +13,9 @@ import JsonLd from '@learner/components/seo/JsonLd';
 import SeoShell from '@learner/components/seo/SeoShell';
 import SeoFallback from '@learner/components/seo/SeoFallback';
 
+// Cache the rendered page for an hour instead of re-fetching per request.
+export const revalidate = 3600;
+
 export async function generateMetadata({ params }: any) {
   return await getMetadata(params.courseId, undefined, {
     path: `/pos/content/${params.courseId}`,

@@ -1,14 +1,21 @@
 import { cache } from 'react';
-import { fetchContent, hierarchyAPI } from '../API/contentService';
+import { ContentSearch, fetchContent, hierarchyAPI } from '../API/contentService';
+import { siteConfig } from './siteConfig';
 
 // React cache() dedupes within a single request, so generateMetadata and the
 // page body share one API call instead of fetching twice.
 
+// fetchContent returns the error object instead of throwing, and an AxiosError
+// has a string `name` — so check for a real content shape, not just a name.
+const asContent = (data: any) =>
+  data && !(data instanceof Error) && typeof data.name === 'string' && data.identifier
+    ? data
+    : null;
+
 export const getHierarchy = cache(async (id?: string) => {
   if (!id) return null;
   try {
-    const data: any = await hierarchyAPI(id);
-    return typeof data?.name === 'string' ? data : null;
+    return asContent(await hierarchyAPI(id));
   } catch {
     return null;
   }
@@ -17,10 +24,30 @@ export const getHierarchy = cache(async (id?: string) => {
 export const getContent = cache(async (id?: string) => {
   if (!id) return null;
   try {
-    const data: any = await fetchContent(id, { mode: null });
-    return typeof data?.name === 'string' ? data : null;
+    return asContent(await fetchContent(id, { mode: null }));
   } catch {
     return null;
+  }
+});
+
+/** First page of live courses, for server-rendered listing pages. */
+export const getCourseList = cache(async (limit = 48) => {
+  try {
+    const response: any = await ContentSearch({
+      filters: {
+        primaryCategory: ['Course'],
+        status: ['Live'],
+        ...(siteConfig.variant === 'thematic'
+          ? { program: 'Experimento India' }
+          : {}),
+      },
+      fields: ['identifier', 'name'],
+      limit,
+      offset: 0,
+    });
+    return response?.result?.content ?? [];
+  } catch {
+    return [];
   }
 });
 

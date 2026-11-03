@@ -7,6 +7,11 @@ import { getContentTrail } from '@learner/utils/seo/contentData';
 import { contentJsonLd, breadcrumbJsonLd } from '@learner/utils/seo/jsonLd';
 import JsonLd from '@learner/components/seo/JsonLd';
 import Layout from '@learner/components/pos/Layout';
+import SeoShell from '@learner/components/seo/SeoShell';
+import SeoFallback from '@learner/components/seo/SeoFallback';
+
+// Cache the rendered page for an hour instead of re-fetching per request.
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: any) {
   return await getMetadata(params.identifier, undefined, {
@@ -47,6 +52,13 @@ const App = async ({ params }: any) => {
           ]}
         />
       )}
+      <SeoFallback>
+        <SeoShell
+          title={content?.name}
+          description={content?.description}
+          crumbs={crumbs}
+        />
+      </SeoFallback>
       <Player
         userIdLocalstorageName={'did'}
         contentBaseUrl="/pos/content"

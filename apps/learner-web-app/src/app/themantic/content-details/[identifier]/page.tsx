@@ -6,6 +6,11 @@ import { getMetadata } from '@learner/utils/API/metabaseService';
 import { getContent } from '@learner/utils/seo/contentData';
 import { contentJsonLd, breadcrumbJsonLd } from '@learner/utils/seo/jsonLd';
 import JsonLd from '@learner/components/seo/JsonLd';
+import SeoShell from '@learner/components/seo/SeoShell';
+import SeoFallback from '@learner/components/seo/SeoFallback';
+
+// Cache the rendered page for an hour instead of re-fetching per request.
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: any) {
   return await getMetadata(params.identifier, undefined, {
@@ -17,6 +22,10 @@ export async function generateMetadata({ params }: any) {
 const page = async ({ params }: any) => {
   const content = await getContent(params?.identifier);
   const path = `/themantic/content-details/${params?.identifier}`;
+  const crumbs = [
+    { name: 'Experimento India', path: '/themantic' },
+    { name: content?.name, path },
+  ];
 
   return (
     <div className="thematic-page">
@@ -32,13 +41,17 @@ const page = async ({ params }: any) => {
               language: content.contentLanguage,
               contentUrl: content.artifactUrl,
             }),
-            breadcrumbJsonLd([
-              { name: 'Experimento India', path: '/themantic' },
-              { name: content.name, path },
-            ]),
+            breadcrumbJsonLd(crumbs),
           ]}
         />
       )}
+      <SeoFallback>
+        <SeoShell
+          title={content?.name}
+          description={content?.description}
+          crumbs={crumbs}
+        />
+      </SeoFallback>
       <ContentDetailsPage />
     </div>
   );

@@ -10,6 +10,11 @@ import { hierarchyAPI } from '@content-mfes/services/Hierarchy';
 import { getContentTrail } from '@learner/utils/seo/contentData';
 import { contentJsonLd, breadcrumbJsonLd } from '@learner/utils/seo/jsonLd';
 import JsonLd from '@learner/components/seo/JsonLd';
+import SeoShell from '@learner/components/seo/SeoShell';
+import SeoFallback from '@learner/components/seo/SeoFallback';
+
+// Cache the rendered page for an hour instead of re-fetching per request.
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: any) {
   return await getMetadata(params.identifier, undefined, {
@@ -89,6 +94,13 @@ const HomePage = async ({ params }: { params: { courseId: string; unitId: string
           ]}
         />
       )}
+      <SeoFallback>
+        <SeoShell
+          title={content?.name}
+          description={content?.description}
+          crumbs={crumbs}
+        />
+      </SeoFallback>
       <Layout sx={backgroundSx}>
         <SubHeader showFilter={false} />
         <Player
