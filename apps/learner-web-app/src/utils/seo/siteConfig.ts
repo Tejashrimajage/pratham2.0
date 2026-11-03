@@ -22,18 +22,27 @@ const SITE_DETAILS = {
     pathPrefix: '/pos',
     foreignPrefix: '/themantic',
     ogLocale: 'en_IN',
+    defaultDescription:
+      'Free videos, games, stories and reading material in 15 languages for ages 1 to 18+, from Pratham Open School.',
+    defaultImage: '/images/home-page-banner.png',
   },
   thematic: {
     name: 'Experimento India',
     pathPrefix: '/themantic',
     foreignPrefix: '/pos',
     ogLocale: 'en_IN',
+    defaultDescription:
+      'Hands-on science, energy, environment and health learning resources for schools, from Experimento India.',
+    defaultImage: '/images/image_ver.png',
   },
   other: {
     name: 'Pratham',
     pathPrefix: '/',
     foreignPrefix: '',
     ogLocale: 'en_IN',
+    defaultDescription:
+      'A platform for learners to learn and grow through educational content.',
+    defaultImage: '/logo.png',
   },
 } as const;
 

@@ -1,27 +1,34 @@
 import { fetchContent, hierarchyAPI } from './contentService';
+import { buildMetadata } from '../seo/buildMetadata';
 
-export async function getMetadata(identifier: any, unitId?: any) {
-  let product = { name: '', description: '', appIcon: '', posterImage: '' };
-  if (unitId) {
-    product = await hierarchyAPI(unitId);
-  } else {
-    product = await fetchContent(identifier);
+type MetadataOptions = {
+  /** Path on this site, used for the canonical URL. */
+  path?: string;
+  type?: 'website' | 'article' | 'video.other';
+  noindex?: boolean;
+};
+
+export async function getMetadata(
+  identifier: any,
+  unitId?: any,
+  options: MetadataOptions = {}
+) {
+  let product: any;
+  try {
+    product = unitId
+      ? await hierarchyAPI(unitId)
+      : await fetchContent(identifier, { mode: null });
+  } catch {
+    product = null;
   }
-  return {
-    title: product?.name,
+
+  // Both services resolve with an error object instead of throwing.
+  const name = typeof product?.name === 'string' ? product.name : '';
+
+  return buildMetadata({
+    title: name,
     description: product?.description,
-    openGraph: {
-      title: product?.name,
-      description: product?.description,
-      images: [
-        {
-          url:
-            product?.posterImage || product?.appIcon || '/images/image_ver.png',
-          width: 1200,
-          height: 630,
-          alt: product?.name,
-        },
-      ],
-    },
-  };
+    image: product?.posterImage || product?.appIcon,
+    ...options,
+  });
 }
