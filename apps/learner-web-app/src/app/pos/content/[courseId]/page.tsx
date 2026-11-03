@@ -11,7 +11,7 @@ import {
 import { courseJsonLd, breadcrumbJsonLd } from '@learner/utils/seo/jsonLd';
 import JsonLd from '@learner/components/seo/JsonLd';
 import SeoShell from '@learner/components/seo/SeoShell';
-import ClientSwap from '@learner/components/seo/ClientSwap';
+import SeoFallback from '@learner/components/seo/SeoFallback';
 
 export async function generateMetadata({ params }: any) {
   return await getMetadata(params.courseId, undefined, {
@@ -54,33 +54,30 @@ const App = async ({ params }: any) => {
           ]}
         />
       )}
-      <ClientSwap
-        fallback={
-          <SeoShell
-            title={course?.name}
-            description={course?.description}
-            crumbs={crumbs}
-            items={units}
-            itemsLabel="Units in this course"
-          />
-        }
-      >
-        <CourseUnitDetails
-          isShowLayout={false}
-          _config={{
-            isEnrollmentRequired: false,
-            userIdLocalstorageName: 'did',
-            contentBaseUrl: '/pos/content',
-            default_img: '/images/unit.png',
-            _card: { isHideProgress: true, isHideProgressStatus: true },
-            _infoCard: {
-              _cardMedia: { maxHeight: { xs: '200px', sm: '280px' } },
-              default_img: '/images/image_ver.png',
-            },
-            _grid: { xs: 6, sm: 4, md: 3, lg: 2.5 },
-          }}
+      <SeoFallback>
+        <SeoShell
+          title={course?.name}
+          description={course?.description}
+          crumbs={crumbs}
+          items={units}
+          itemsLabel="Units in this course"
         />
-      </ClientSwap>
+      </SeoFallback>
+      <CourseUnitDetails
+        isShowLayout={false}
+        _config={{
+          isEnrollmentRequired: false,
+          userIdLocalstorageName: 'did',
+          contentBaseUrl: '/pos/content',
+          default_img: '/images/unit.png',
+          _card: { isHideProgress: true, isHideProgressStatus: true },
+          _infoCard: {
+            _cardMedia: { maxHeight: { xs: '200px', sm: '280px' } },
+            default_img: '/images/image_ver.png',
+          },
+          _grid: { xs: 6, sm: 4, md: 3, lg: 2.5 },
+        }}
+      />
     </Layout>
   );
 };

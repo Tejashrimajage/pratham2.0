@@ -16,6 +16,8 @@ import {
 } from '@learner/utils/seo/contentData';
 import { courseJsonLd, breadcrumbJsonLd } from '@learner/utils/seo/jsonLd';
 import JsonLd from '@learner/components/seo/JsonLd';
+import SeoShell from '@learner/components/seo/SeoShell';
+import SeoFallback from '@learner/components/seo/SeoFallback';
 
 export async function generateMetadata({ params }: any) {
   return await getMetadata(params.courseId, undefined, {
@@ -72,6 +74,13 @@ if (courseId) {
     courseId: params?.courseId,
   });
 
+  const units = childrenOf(course)
+    .filter(isCollection)
+    .map((unit: any) => ({
+      name: unit.name,
+      path: `${coursePath}/${unit.identifier}`,
+    }));
+
   return (
     <div className="thematic-page">
       {course && (
@@ -83,17 +92,21 @@ if (courseId) {
               path: coursePath,
               image: course.posterImage || course.appIcon,
               language: course.contentLanguage,
-              parts: childrenOf(course)
-                .filter(isCollection)
-                .map((unit: any) => ({
-                  name: unit.name,
-                  path: `${coursePath}/${unit.identifier}`,
-                })),
+              parts: units,
             }),
             breadcrumbJsonLd(crumbs),
           ]}
         />
       )}
+      <SeoFallback>
+        <SeoShell
+          title={course?.name}
+          description={course?.description}
+          crumbs={crumbs}
+          items={units}
+          itemsLabel="Units in this course"
+        />
+      </SeoFallback>
       <Layout sx={backgroundSx}>
         <SubHeader showFilter={false} />
         <Box className='bs-container bs-px-5'>
