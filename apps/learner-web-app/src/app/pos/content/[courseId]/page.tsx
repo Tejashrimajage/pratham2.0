@@ -10,6 +10,8 @@ import {
 } from '@learner/utils/seo/contentData';
 import { courseJsonLd, breadcrumbJsonLd } from '@learner/utils/seo/jsonLd';
 import JsonLd from '@learner/components/seo/JsonLd';
+import SeoShell from '@learner/components/seo/SeoShell';
+import ClientSwap from '@learner/components/seo/ClientSwap';
 
 export async function generateMetadata({ params }: any) {
   return await getMetadata(params.courseId, undefined, {
@@ -28,6 +30,13 @@ const App = async ({ params }: any) => {
     courseId: params.courseId,
   });
 
+  const units = childrenOf(course)
+    .filter(isCollection)
+    .map((unit: any) => ({
+      name: unit.name,
+      path: `${coursePath}/${unit.identifier}`,
+    }));
+
   return (
     <Layout>
       {course && (
@@ -39,32 +48,39 @@ const App = async ({ params }: any) => {
               path: coursePath,
               image: course.posterImage || course.appIcon,
               language: course.contentLanguage,
-              parts: childrenOf(course)
-                .filter(isCollection)
-                .map((unit: any) => ({
-                  name: unit.name,
-                  path: `${coursePath}/${unit.identifier}`,
-                })),
+              parts: units,
             }),
             breadcrumbJsonLd(crumbs),
           ]}
         />
       )}
-      <CourseUnitDetails
-        isShowLayout={false}
-        _config={{
-          isEnrollmentRequired: false,
-          userIdLocalstorageName: 'did',
-          contentBaseUrl: '/pos/content',
-          default_img: '/images/unit.png',
-          _card: { isHideProgress: true, isHideProgressStatus: true },
-          _infoCard: {
-            _cardMedia: { maxHeight: { xs: '200px', sm: '280px' } },
-            default_img: '/images/image_ver.png',
-          },
-          _grid: { xs: 6, sm: 4, md: 3, lg: 2.5 },
-        }}
-      />
+      <ClientSwap
+        fallback={
+          <SeoShell
+            title={course?.name}
+            description={course?.description}
+            crumbs={crumbs}
+            items={units}
+            itemsLabel="Units in this course"
+          />
+        }
+      >
+        <CourseUnitDetails
+          isShowLayout={false}
+          _config={{
+            isEnrollmentRequired: false,
+            userIdLocalstorageName: 'did',
+            contentBaseUrl: '/pos/content',
+            default_img: '/images/unit.png',
+            _card: { isHideProgress: true, isHideProgressStatus: true },
+            _infoCard: {
+              _cardMedia: { maxHeight: { xs: '200px', sm: '280px' } },
+              default_img: '/images/image_ver.png',
+            },
+            _grid: { xs: 6, sm: 4, md: 3, lg: 2.5 },
+          }}
+        />
+      </ClientSwap>
     </Layout>
   );
 };
