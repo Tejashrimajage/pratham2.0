@@ -18,6 +18,10 @@ export async function generateMetadata({ params }: any) {
   return await getMetadata(params.identifier, undefined, {
     path: `/pos/content-details/${params.identifier}`,
     type: 'article',
+    // Duplicate of the nested course/unit/content URL, which is the canonical
+    // one. The parent course is not resolvable from a bare content id, so this
+    // route cannot redirect or point a canonical at it.
+    noindex: true,
   });
 }
 const ContentEnrollDetails = dynamic(() => import('@ContentEnrollDetails'), {
