@@ -7,9 +7,17 @@ const FALLBACK_ORIGIN = 'https://www.prathamopenschool.org';
 /** 'other' covers every deployment that is not an SEO target (PLP, LMP). */
 export type SiteVariant = 'pos' | 'thematic' | 'other';
 
-const rawVariant = process.env.NEXT_PUBLIC_SITE_VARIANT?.trim();
-export const SITE_VARIANT: SiteVariant =
-  rawVariant === 'pos' || rawVariant === 'thematic' ? rawVariant : 'other';
+// 'themantic' is accepted too: the routes are /themantic, so that spelling is the
+// natural guess. Getting it wrong would silently fall through to 'other' and leave
+// the site with no sitemap and no canonicals.
+const VARIANT_ALIASES: Record<string, SiteVariant> = {
+  pos: 'pos',
+  thematic: 'thematic',
+  themantic: 'thematic',
+};
+
+const rawVariant = process.env.NEXT_PUBLIC_SITE_VARIANT?.trim().toLowerCase();
+export const SITE_VARIANT: SiteVariant = VARIANT_ALIASES[rawVariant ?? ''] ?? 'other';
 
 const stripTrailingSlash = (url: string) => url.replace(/\/+$/, '');
 
