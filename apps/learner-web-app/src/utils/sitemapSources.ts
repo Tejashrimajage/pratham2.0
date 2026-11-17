@@ -1,4 +1,5 @@
 import { ContentSearch, hierarchyAPI } from './API/contentService';
+import type { SiteConfig } from './seo';
 
 // Every public course, unit and content URL. Composite search does paginate, so
 // the full course list is reachable; hierarchy lookups then supply the children.
@@ -23,13 +24,17 @@ const lastModifiedOf = (node: any): string | undefined =>
 // hierarchyAPI swallows errors and returns { error }, so check for a real node.
 const isContent = (value: any) => Boolean(value?.identifier);
 
-async function fetchAllCourses() {
+async function fetchAllCourses(site: SiteConfig) {
   const courses: any[] = [];
   let offset = 0;
 
   while (offset < MAX_COURSES) {
     const response: any = await ContentSearch({
-      filters: { primaryCategory: ['Course'], status: ['Live'] },
+      filters: {
+        primaryCategory: ['Course'],
+        status: ['Live'],
+        ...(site.programFilter ? { program: [site.programFilter] } : {}),
+      },
       fields: ['identifier', 'name', 'lastPublishedOn', 'lastUpdatedOn'],
       limit: PAGE_SIZE,
       offset,
@@ -55,12 +60,14 @@ async function inBatches<T, R>(items: T[], worker: (item: T) => Promise<R>) {
   return results;
 }
 
-export async function collectContentEntries(): Promise<SitemapEntry[]> {
+export async function collectContentEntries(
+  site: SiteConfig
+): Promise<SitemapEntry[]> {
   const entries: SitemapEntry[] = [];
 
   let courses: any[] = [];
   try {
-    courses = await fetchAllCourses();
+    courses = await fetchAllCourses(site);
   } catch {
     // Search unavailable: the caller still publishes the static pages.
     return entries;
@@ -78,7 +85,7 @@ export async function collectContentEntries(): Promise<SitemapEntry[]> {
   for (const course of trees) {
     if (!course) continue;
 
-    const coursePath = `/pos/content/${course.identifier}`;
+    const coursePath = `${site.coursePathBase}/${course.identifier}`;
     entries.push({
       path: coursePath,
       lastModified: lastModifiedOf(course),
