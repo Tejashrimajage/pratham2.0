@@ -99,3 +99,63 @@ export function buildSeoDescription(item: any, brand = DEFAULT_BRAND): string {
     DESC_MAX
   );
 }
+
+/**
+ * Metadata for a fixed page (home, pillar, about). Social previews need absolute
+ * URLs on every platform, and the correct domain per site, so the origin comes
+ * from the request host with the path prefix as a fallback for dev and QA.
+ */
+export async function buildPageMetadata({
+  title,
+  description,
+  image,
+  path,
+  type = 'website',
+}: {
+  title: string;
+  description: string;
+  image?: string;
+  path: string;
+  type?: 'website' | 'article';
+}) {
+  const { headers } = await import('next/headers');
+  const { siteForHost, absoluteUrl } = await import('./seo');
+
+  const isExperimento = path.startsWith('/themantic');
+  const site = siteForHost(headers().get('host'));
+  const origin =
+    site?.origin ??
+    (isExperimento
+      ? 'https://experimentoindia.prathamopenschool.org'
+      : 'https://www.prathamopenschool.org');
+
+  const siteName = isExperimento ? 'Experimento India' : DEFAULT_BRAND;
+  const url = absoluteUrl(path, origin);
+  const ogImage =
+    image && /^https?:\/\//i.test(image)
+      ? image
+      : absoluteUrl(image || '/images/home-page-banner.png', origin);
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName,
+      type,
+      locale: 'en_IN',
+      images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+    },
+    // Set explicitly rather than relying on Next deriving them from openGraph,
+    // so X/Twitter previews are guaranteed.
+    twitter: {
+      card: 'summary_large_image' as const,
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
+}
