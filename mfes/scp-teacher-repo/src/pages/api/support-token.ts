@@ -134,6 +134,7 @@ export default async function handler(
       ph: user.mobile || profile?.mobile || '',
       pg: resolveProgram(user, requestedTenantId),
       st: customFieldValue(profile?.customFields, 'STATE'),
+      ap: 'LMP', // App name shown on the ticket; fixed per portal.
       iat: now,
       exp: now + TOKEN_TTL_SECONDS,
       jti: randomUUID(),

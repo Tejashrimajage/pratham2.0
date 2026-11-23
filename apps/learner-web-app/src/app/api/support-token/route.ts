@@ -140,6 +140,7 @@ export async function POST(request: NextRequest) {
       ph: user.mobile || profile?.mobile || '',
       pg: resolveProgram(user, requestedTenantId),
       st: customFieldValue(profile?.customFields, 'STATE'),
+      ap: 'PLP web app', // App name shown on the ticket; fixed per portal.
       iat: now,
       exp: now + TOKEN_TTL_SECONDS,
       jti: randomUUID(),
