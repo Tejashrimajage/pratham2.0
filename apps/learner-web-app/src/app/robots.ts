@@ -7,11 +7,13 @@ import { absoluteUrl, siteForHost } from '@learner/utils/seo';
 export default function robots(): MetadataRoute.Robots {
   const site = siteForHost(headers().get('host'));
 
-  // Dev, QA and other tenant hosts serve this same app - keep them uncrawlable.
+  // Not one of our hosts at all (another tenant domain) - keep it uncrawlable.
   if (!site) {
     return { rules: [{ userAgent: '*', disallow: '/' }] };
   }
 
+  // Test hosts are crawlable on purpose. Every response carries
+  // X-Robots-Tag: noindex, and a crawler has to fetch the page to see it.
   return {
     rules: [
       {
