@@ -7,6 +7,11 @@ import { hostFromHeaders, isIndexableHost } from '@learner/utils/seo';
 const GONE_PREFIXES = ['/catalog/'];
 const GONE_PATHS = ['/readingcamp'];
 
+// The V1 content player serves its own HTML from this domain (preview.html and
+// youtube.html). Those are live app files, not old-site pages, so the extension
+// rule below must not 404 them.
+const LIVE_HTML_PREFIXES = ['/content/preview/'];
+
 export function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
 
@@ -38,7 +43,10 @@ export function middleware(request: NextRequest) {
 
   // Old-site page extensions. Deliberately narrow: a broad "has a dot" rule would
   // swallow real root files such as robots.txt, sitemap.xml, favicon.ico and sw.js.
-  if (/\.(html?|php|aspx?|jsp)$/.test(lowerPath)) {
+  const isLiveHtml = LIVE_HTML_PREFIXES.some((prefix) =>
+    lowerPath.startsWith(prefix)
+  );
+  if (!isLiveHtml && /\.(html?|php|aspx?|jsp)$/.test(lowerPath)) {
     return new NextResponse(null, { status: 404 });
   }
 
