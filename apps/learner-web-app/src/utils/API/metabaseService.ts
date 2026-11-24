@@ -14,6 +14,17 @@ const isResourceNotFound = (product: any) => {
   );
 };
 
+// The fetchers return the rejection instead of throwing, and an AxiosError has a
+// string `name`, so a transport failure would otherwise become the page title
+// ("AxiosError | Pratham Open School"). A real item always carries an identifier.
+const isRealContent = (product: any) =>
+  !!product &&
+  !(product instanceof Error) &&
+  !product.isAxiosError &&
+  !product.error &&
+  typeof product.name === 'string' &&
+  !!product.identifier;
+
 // Taken from the path rather than the host, so it stays correct on dev and QA
 // where the host does not identify the site.
 const brandFor = (canonicalPath?: string) =>
@@ -34,6 +45,12 @@ export async function getMetadata(
   }
   if (isResourceNotFound(product)) {
     notFound();
+  }
+
+  // A transport error (timeout, 5xx, DNS) is not a 404, so fall back to plain site
+  // metadata rather than publishing the error object as the title.
+  if (!isRealContent(product)) {
+    product = { name: '', description: '', appIcon: '', posterImage: '' };
   }
 
   // Only routes that pass canonicalPath get the templated title, canonical and

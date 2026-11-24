@@ -63,6 +63,10 @@ export function buildSeoDescription(item: any, brand = DEFAULT_BRAND): string {
   const name = clean(item?.name);
   const description = clean(item?.description);
 
+  // No usable item, e.g. a failed fetch. Describe the site rather than emitting
+  // a half-built sentence like "Learning resource: . Free on ...".
+  if (!name && !description) return `Free learning resources from ${brand}.`;
+
   // Section 4: use the real description unless it is empty or just repeats the title.
   if (description && description.toLowerCase() !== name.toLowerCase()) {
     return truncate(description, DESC_MAX);
