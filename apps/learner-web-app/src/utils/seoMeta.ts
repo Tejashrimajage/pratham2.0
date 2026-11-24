@@ -119,10 +119,10 @@ export async function buildPageMetadata({
   type?: 'website' | 'article';
 }) {
   const { headers } = await import('next/headers');
-  const { siteForHost, absoluteUrl } = await import('./seo');
+  const { siteFromHeaders, absoluteUrl } = await import('./seo');
 
   const isExperimento = path.startsWith('/themantic');
-  const site = siteForHost(headers().get('host'));
+  const site = siteFromHeaders(headers());
   const origin =
     site?.origin ??
     (isExperimento

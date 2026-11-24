@@ -2,6 +2,7 @@ import React from 'react';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getTenantInfo } from '@learner/utils/API/ProgramService';
+import { hostFromHeaders } from '@learner/utils/seo';
 import ProgramDetailClient from './ProgramDetailClient';
 
 // This route matches any single root-level segment, so unknown URLs used to render
@@ -15,7 +16,9 @@ export default async function Page({ params }: any) {
   let programs: any[] | null = null;
   try {
     const requestHeaders = headers();
-    const host = requestHeaders.get('host');
+    // Forwarded host first: behind a proxy `host` can be an internal name, and
+    // tenants whitelist the public origin.
+    const host = hostFromHeaders(requestHeaders);
     const proto = requestHeaders.get('x-forwarded-proto') ?? 'https';
     // Tenants whitelist an exact origin, and production is www while the
     // configured POS domain is not, so try both spellings before giving up.

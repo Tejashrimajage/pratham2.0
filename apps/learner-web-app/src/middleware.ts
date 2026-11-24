@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { isIndexableHost } from '@learner/utils/seo';
+import { hostFromHeaders, isIndexableHost } from '@learner/utils/seo';
 
 // Paths from the old site that Google still holds. No old-id -> do_-id mapping
 // exists, so they return 410 Gone, which drops them from the index faster than 404.
@@ -46,7 +46,7 @@ export function middleware(request: NextRequest) {
 
   // Dev, QA and other tenant hosts share this app. robots.txt already disallows
   // them; this also drops anything Google has indexed from those hosts already.
-  if (!isIndexableHost(request.headers.get('host'))) {
+  if (!isIndexableHost(hostFromHeaders(request.headers))) {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow');
   }
 

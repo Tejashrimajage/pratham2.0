@@ -99,6 +99,27 @@ export const siteForHost = (host?: string | null): SiteConfig | null => {
 export const isIndexableHost = (host?: string | null) =>
   siteForHost(host)?.indexable === true;
 
+/** Minimal shape of both next/headers and NextRequest.headers. */
+interface HeaderBag {
+  get(name: string): string | null | undefined;
+}
+
+/**
+ * The public host for this request. Behind a proxy, `host` can be an internal name
+ * such as localhost:3000, which would resolve to no site and de-index the live
+ * domain, so the forwarded host wins. A proxy chain sends a comma-separated list;
+ * the first entry is the original client-facing host.
+ */
+export const hostFromHeaders = (headers: HeaderBag): string | null => {
+  const forwarded = headers.get('x-forwarded-host');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return headers.get('host') ?? null;
+};
+
+/** The site for this request, resolved from the forwarded host when present. */
+export const siteFromHeaders = (headers: HeaderBag): SiteConfig | null =>
+  siteForHost(hostFromHeaders(headers));
+
 export const absoluteUrl = (path = '/', origin = SITES[0].origin) =>
   `${origin}${path.startsWith('/') ? path : `/${path}`}`;
 

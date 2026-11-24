@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 import { headers } from 'next/headers';
-import { absoluteUrl, siteForHost } from '@learner/utils/seo';
+import { absoluteUrl, siteFromHeaders } from '@learner/utils/seo';
 import { collectContentEntries } from '@learner/utils/sitemapSources';
 
 // No `export const revalidate` here: this route reads headers(), which makes it
@@ -17,7 +17,7 @@ const safeDate = (value?: string) => {
 };
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const site = siteForHost(headers().get('host'));
+  const site = siteFromHeaders(headers());
 
   // Never advertise production URLs from a dev, QA or other tenant host.
   if (!site) {

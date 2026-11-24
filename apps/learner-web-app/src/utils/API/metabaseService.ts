@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
-import { absoluteUrl, siteForHost, SITE_URL } from '../seo';
+import { absoluteUrl, siteFromHeaders, SITE_URL } from '../seo';
 import { buildSeoDescription, buildSeoTitle } from '../seoMeta';
 import { fetchContent, hierarchyAPI } from './contentService';
 
@@ -63,7 +63,7 @@ export async function getMetadata(
   const brand = brandFor(canonicalPath);
   const title = buildSeoTitle(product, brand);
   const description = buildSeoDescription(product, brand);
-  const origin = siteForHost(headers().get('host'))?.origin ?? SITE_URL;
+  const origin = siteFromHeaders(headers())?.origin ?? SITE_URL;
   const canonical = absoluteUrl(canonicalPath, origin);
 
   // og:image must be absolute; an already-absolute CDN URL passes through.
