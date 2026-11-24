@@ -7,6 +7,12 @@ export const dynamic = 'force-dynamic';
 // /user/auth, never from the browser, so it cannot be forged in DevTools.
 const TOKEN_TTL_SECONDS = 60;
 
+// Same page, different wrappers. A fixed map, so an edited `src` can only
+// ever pick a name from this list.
+const APP_BY_SOURCE: Record<string, string> = {
+  android: 'myLearning app',
+};
+
 type Tenant = {
   tenantId?: string;
   tenantName?: string;
@@ -73,10 +79,12 @@ export async function POST(request: NextRequest) {
 
   let requestedTenantId = '';
   let academicYearId = '';
+  let src = '';
   try {
     const body = await request.json();
     requestedTenantId = String(body?.tenantId || '');
     academicYearId = String(body?.academicYearId || '');
+    src = String(body?.src || '').toLowerCase();
   } catch (error) {
     requestedTenantId = '';
   }
@@ -140,7 +148,7 @@ export async function POST(request: NextRequest) {
       ph: user.mobile || profile?.mobile || '',
       pg: resolveProgram(user, requestedTenantId),
       st: customFieldValue(profile?.customFields, 'STATE'),
-      ap: 'PLP web app', // App name shown on the ticket; fixed per portal.
+      ap: APP_BY_SOURCE[src] ?? 'PLP web app',
       iat: now,
       exp: now + TOKEN_TTL_SECONDS,
       jti: randomUUID(),

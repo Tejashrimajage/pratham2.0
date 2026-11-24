@@ -96,6 +96,8 @@ const SupportRequest = () => {
           body: JSON.stringify({
             tenantId: localStorage.getItem('tenantId') || '',
             academicYearId: localStorage.getItem('academicYearId') || '',
+            // ?src=android when opened from the mobile app's web view.
+            src: new URLSearchParams(window.location.search).get('src') || '',
           }),
         });
         if (!response.ok) {
