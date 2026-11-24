@@ -3,9 +3,8 @@ import { headers } from 'next/headers';
 import { absoluteUrl, siteForHost } from '@learner/utils/seo';
 import { collectContentEntries } from '@learner/utils/sitemapSources';
 
-// Rebuilt daily rather than per request: this walks every course hierarchy.
-export const revalidate = 86400;
-
+// No `export const revalidate` here: this route reads headers(), which makes it
+// dynamic, so the option would be ignored. The 24h cache lives in sitemapSources.
 // Google rejects a sitemap over 50,000 URLs.
 const MAX_URLS = 50000;
 

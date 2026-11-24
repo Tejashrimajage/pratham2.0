@@ -9,6 +9,15 @@ const MAX_COURSES = 5000;
 /** Hierarchy lookups run in parallel batches so a rebuild stays quick. */
 const CONCURRENCY = 8;
 
+// The route reads headers(), which makes it dynamic, so `export const revalidate`
+// never applies and every request would walk every course (~2,000 upstream calls
+// on production). Cache the result here instead, per site, and stop walking once
+// the budget is spent so a crawler can never hold the request open indefinitely.
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const TIME_BUDGET_MS = 20_000;
+
+const cache = new Map<string, { at: number; entries: SitemapEntry[] }>();
+
 const COLLECTION_MIME = 'application/vnd.ekstep.content-collection';
 
 export interface SitemapEntry {
@@ -51,9 +60,16 @@ async function fetchAllCourses(site: SiteConfig) {
   return courses;
 }
 
-async function inBatches<T, R>(items: T[], worker: (item: T) => Promise<R>) {
+async function inBatches<T, R>(
+  items: T[],
+  worker: (item: T) => Promise<R>,
+  deadline: number
+) {
   const results: R[] = [];
   for (let i = 0; i < items.length; i += CONCURRENCY) {
+    // Partial coverage beats a timed-out response: Google keeps the URLs it
+    // already has and picks up the rest on the next fetch.
+    if (Date.now() > deadline) break;
     const slice = items.slice(i, i + CONCURRENCY);
     results.push(...(await Promise.all(slice.map(worker))));
   }
@@ -63,13 +79,20 @@ async function inBatches<T, R>(items: T[], worker: (item: T) => Promise<R>) {
 export async function collectContentEntries(
   site: SiteConfig
 ): Promise<SitemapEntry[]> {
+  const cached = cache.get(site.key);
+  if (cached && Date.now() - cached.at < CACHE_TTL_MS) {
+    return cached.entries;
+  }
+
+  const deadline = Date.now() + TIME_BUDGET_MS;
   const entries: SitemapEntry[] = [];
 
   let courses: any[] = [];
   try {
     courses = await fetchAllCourses(site);
   } catch {
-    // Search unavailable: the caller still publishes the static pages.
+    // Search unavailable: the caller still publishes the static pages. Not cached,
+    // so the next request retries instead of serving an empty sitemap all day.
     return entries;
   }
 
@@ -80,7 +103,7 @@ export async function collectContentEntries(
     } catch {
       return null;
     }
-  });
+  }, deadline);
 
   for (const course of trees) {
     if (!course) continue;
@@ -114,6 +137,12 @@ export async function collectContentEntries(
         });
       }
     }
+  }
+
+  // Only cache a real result: an empty list means search failed or the budget ran
+  // out before the first batch, and we should retry on the next request.
+  if (entries.length) {
+    cache.set(site.key, { at: Date.now(), entries });
   }
 
   return entries;
