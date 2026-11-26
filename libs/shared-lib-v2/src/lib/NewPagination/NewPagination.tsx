@@ -19,9 +19,19 @@ export interface NewPaginationProps {
   fetchMoreData?: () => void;
   TotalCount: number;
   hasMore?: boolean;
-  items?: React.ReactNode[]; // Items to display in infinite scroll
+  items?: React.ReactNode[]; // Legacy: only its length is read. Prefer `dataLength`.
+  /** How many rows are currently shown, for the mobile infinite scroll. */
+  dataLength?: number;
   /** Show the "Go to page" input + Go button beside the page numbers. Default true. */
   showGoToPage?: boolean;
+  /** Show the jump-to-first / jump-to-last arrows. Default true. */
+  showFirstLastButtons?: boolean;
+  /** Rows per page. Supply it to get the built-in "Showing x - y of z" label. */
+  pageSize?: number;
+  /** Noun for the built-in label, e.g. "learners". */
+  itemsLabel?: string;
+  /** Replaces the built-in label entirely, for callers with their own i18n key. */
+  rangeLabel?: React.ReactNode;
 }
 
 const NewPagination: React.FC<NewPaginationProps> = ({
@@ -33,7 +43,12 @@ const NewPagination: React.FC<NewPaginationProps> = ({
   hasMore = true,
   TotalCount = 0,
   items = [],
+  dataLength,
   showGoToPage = true,
+  showFirstLastButtons = true,
+  pageSize,
+  itemsLabel,
+  rangeLabel,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -70,18 +85,30 @@ const NewPagination: React.FC<NewPaginationProps> = ({
     }
   };
 
-  if (isMobile) {
+  // `items` is never rendered; only its length was ever used. `dataLength` replaces it.
+  const shownCount = dataLength ?? items.length;
+
+  // Built from parts rather than an i18n placeholder, so it can't render a raw {{var}}.
+  const builtInRangeLabel =
+    pageSize && TotalCount > 0
+      ? `${t('COMMON.SHOWING', { defaultValue: 'Showing' })} ${
+          (page - 1) * pageSize + 1
+        } - ${Math.min(page * pageSize, TotalCount)} ${t('COMMON.OF', {
+          defaultValue: 'of',
+        })} ${TotalCount}${itemsLabel ? ` ${itemsLabel}` : ''}`
+      : null;
+
+  const leftLabel = rangeLabel ?? builtInRangeLabel;
+
+  // Only swap to infinite scroll when the caller can actually load more; without
+  // `fetchMoreData` this would render nothing and strand mobile users on page 1.
+  if (isMobile && fetchMoreData) {
     return (
       <InfiniteScroll
-        dataLength={items.length}
-        next={
-          fetchMoreData ||
-          (() => {
-            console.warn('fetchMoreData callback is required for infinite scroll');
-          })
-        }
+        dataLength={shownCount}
+        next={fetchMoreData}
         hasMore={hasMore}
-        loader={items?.length >= TotalCount ? '' : <h4>{t('COMMON.LOADING')}...</h4>}
+        loader={shownCount >= TotalCount ? '' : <h4>{t('COMMON.LOADING')}...</h4>}
         // endMessage={
         //     <p style={{ textAlign: 'center' }}>You have seen all data!</p>
         // }
@@ -96,13 +123,30 @@ const NewPagination: React.FC<NewPaginationProps> = ({
       direction="row"
       spacing={1.5}
       alignItems="center"
-      justifyContent="flex-end"
+      justifyContent={leftLabel ? 'space-between' : 'flex-end'}
       flexWrap="wrap"
       useFlexGap
+      sx={{ width: '100%' }}
     >
-      {showGoToPage && count > 1 && (
-        <>
-          <Box display="flex" alignItems="center" gap={1}>
+      {leftLabel && (
+        <Typography
+          variant="body2"
+          sx={{ color: theme.palette.text.secondary, fontWeight: 500 }}
+        >
+          {leftLabel}
+        </Typography>
+      )}
+
+      <Stack
+        direction="row"
+        spacing={1.5}
+        alignItems="center"
+        flexWrap="wrap"
+        useFlexGap
+      >
+        {showGoToPage && count > 1 && (
+          <>
+            <Box display="flex" alignItems="center" gap={1}>
             <Typography
               variant="body2"
               sx={{ color: theme.palette.text.primary, whiteSpace: 'nowrap' }}
@@ -157,16 +201,21 @@ const NewPagination: React.FC<NewPaginationProps> = ({
             </Button>
           </Box>
 
-          <Divider orientation="vertical" flexItem sx={{ my: 0.5 }} />
-        </>
-      )}
+            <Divider orientation="vertical" flexItem sx={{ my: 0.5 }} />
+          </>
+        )}
 
-      <Pagination
-        count={count}
-        page={page}
-        onChange={(event, value) => onPageChange(value)}
-        color={color}
-      />
+        <Pagination
+          count={count}
+          page={page}
+          onChange={(event, value) => onPageChange(value)}
+          color={color}
+          showFirstButton={showFirstLastButtons}
+          showLastButton={showFirstLastButtons}
+          siblingCount={1}
+          boundaryCount={1}
+        />
+      </Stack>
     </Stack>
   );
 };
