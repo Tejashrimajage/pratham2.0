@@ -3,6 +3,8 @@ import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
@@ -32,6 +34,9 @@ export interface NewPaginationProps {
   itemsLabel?: string;
   /** Replaces the built-in label entirely, for callers with their own i18n key. */
   rangeLabel?: React.ReactNode;
+  /** Page-size choices. Supply both this and `onPageSizeChange` to show the selector. */
+  pageSizeOptions?: number[];
+  onPageSizeChange?: (size: number) => void;
 }
 
 const NewPagination: React.FC<NewPaginationProps> = ({
@@ -49,6 +54,8 @@ const NewPagination: React.FC<NewPaginationProps> = ({
   pageSize,
   itemsLabel,
   rangeLabel,
+  pageSizeOptions,
+  onPageSizeChange,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -100,6 +107,24 @@ const NewPagination: React.FC<NewPaginationProps> = ({
 
   const leftLabel = rangeLabel ?? builtInRangeLabel;
 
+  const showPageSizeSelector = Boolean(
+    pageSize && pageSizeOptions?.length && onPageSizeChange
+  );
+
+  // One height for every control in the row, so the labels line up with the
+  // inputs instead of being pushed off-centre by MUI's differing defaults.
+  const CONTROL_HEIGHT = 36;
+  const labelSx = {
+    color: theme.palette.text.secondary,
+    whiteSpace: 'nowrap' as const,
+    display: 'flex',
+    alignItems: 'center',
+    minHeight: CONTROL_HEIGHT,
+    lineHeight: 1,
+    // Typography body2 renders a <p>, which carries a browser default margin.
+    m: 0,
+  };
+
   // Only swap to infinite scroll when the caller can actually load more; without
   // `fetchMoreData` this would render nothing and strand mobile users on page 1.
   if (isMobile && fetchMoreData) {
@@ -123,18 +148,56 @@ const NewPagination: React.FC<NewPaginationProps> = ({
       direction="row"
       spacing={1.5}
       alignItems="center"
-      justifyContent={leftLabel ? 'space-between' : 'flex-end'}
+      justifyContent={
+        leftLabel || showPageSizeSelector ? 'space-between' : 'flex-end'
+      }
       flexWrap="wrap"
       useFlexGap
       sx={{ width: '100%' }}
     >
-      {leftLabel && (
-        <Typography
-          variant="body2"
-          sx={{ color: theme.palette.text.secondary, fontWeight: 500 }}
-        >
-          {leftLabel}
-        </Typography>
+      {(showPageSizeSelector || leftLabel) && (
+        <Stack direction="row" spacing={1.5} alignItems="center" useFlexGap>
+          {showPageSizeSelector && (
+            <Box display="flex" alignItems="center" gap={1}>
+              <Typography variant="body2" sx={labelSx}>
+                {t('COMMON.ROWS_PER_PAGE', { defaultValue: 'Rows per page' })}:
+              </Typography>
+              <Select
+                size="small"
+                value={pageSize}
+                onChange={(event) =>
+                  onPageSizeChange?.(Number(event.target.value))
+                }
+                inputProps={{
+                  'aria-label': t('COMMON.ROWS_PER_PAGE', {
+                    defaultValue: 'Rows per page',
+                  }),
+                }}
+                sx={{
+                  height: CONTROL_HEIGHT,
+                  borderRadius: '8px',
+                  '& .MuiSelect-select': {
+                    display: 'flex',
+                    alignItems: 'center',
+                    py: 0,
+                  },
+                }}
+              >
+                {pageSizeOptions?.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Box>
+          )}
+
+          {leftLabel && (
+            <Typography variant="body2" sx={{ ...labelSx, fontWeight: 500 }}>
+              {leftLabel}
+            </Typography>
+          )}
+        </Stack>
       )}
 
       <Stack
@@ -147,10 +210,7 @@ const NewPagination: React.FC<NewPaginationProps> = ({
         {showGoToPage && count > 1 && (
           <>
             <Box display="flex" alignItems="center" gap={1}>
-            <Typography
-              variant="body2"
-              sx={{ color: theme.palette.text.primary, whiteSpace: 'nowrap' }}
-            >
+            <Typography variant="body2" sx={labelSx}>
               {t('COMMON.GO_TO_PAGE', { defaultValue: 'Go to page' })}:
             </Typography>
 
@@ -164,11 +224,14 @@ const NewPagination: React.FC<NewPaginationProps> = ({
               inputProps={{
                 inputMode: 'numeric',
                 'aria-label': t('COMMON.GO_TO_PAGE', { defaultValue: 'Go to page' }),
-                style: { textAlign: 'center', padding: '6px 8px' },
+                style: { textAlign: 'center', padding: '0 8px' },
               }}
               sx={{
                 width: 64,
-                '& .MuiOutlinedInput-root': { borderRadius: '8px' },
+                '& .MuiOutlinedInput-root': {
+                  height: CONTROL_HEIGHT,
+                  borderRadius: '8px',
+                },
                 // Float the message so showing it never changes the row height.
                 '& .MuiFormHelperText-root': {
                   position: 'absolute',
@@ -185,6 +248,7 @@ const NewPagination: React.FC<NewPaginationProps> = ({
               disabled={!canGo}
               sx={{
                 minWidth: 64,
+                height: CONTROL_HEIGHT,
                 borderRadius: '20px',
                 textTransform: 'none',
                 fontWeight: 600,
